@@ -195,6 +195,41 @@ p {
   font: 950 22px/1 var(--mono);
 }
 
+.mission-side {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.mission-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 5px;
+}
+
+.mini-btn {
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.82);
+  color: var(--ink);
+  font: 850 9px/1 var(--mono);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.primary-mini {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+.danger-mini {
+  color: var(--red);
+  border-color: rgba(255,43,43,.35);
+}
+
 .fab {
   position: fixed;
   left: 16px;

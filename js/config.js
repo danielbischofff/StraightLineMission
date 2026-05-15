@@ -8,6 +8,9 @@ export const DEFAULT_CENTER = [52.52, 13.405];
 export const DEFAULT_ZOOM = 15;
 export const USER_ZOOM = 18;
 
+export const SCORE_REFERENCE_DISTANCE_METERS = 1000;
+export const SCORE_MIN_ROUTE_DISTANCE_METERS = 50;
+
 export const TILE_LAYER = {
   url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
   options: {

@@ -2,8 +2,9 @@ import { OFF_ROUTE_DISTANCE_METERS } from "./config.js";
 
 let audioContext = null;
 let alarmActive = false;
-let lastBeepAt = 0;
+let currentDistanceMeters = 0;
 let repeatTimerId = null;
+let lastBeepAt = 0;
 
 export function unlockRouteAlarm() {
   const context = getAudioContext();
@@ -20,7 +21,8 @@ export function unlockRouteAlarm() {
 }
 
 export function handleRouteAlarm(distanceMeters) {
-  const outside = distanceMeters >= OFF_ROUTE_DISTANCE_METERS;
+  currentDistanceMeters = Number(distanceMeters || 0);
+  const outside = currentDistanceMeters >= OFF_ROUTE_DISTANCE_METERS;
 
   if (!outside) {
     alarmActive = false;
@@ -31,7 +33,7 @@ export function handleRouteAlarm(distanceMeters) {
   if (!alarmActive) {
     alarmActive = true;
     beepNow();
-    startRepeatAlarm();
+    scheduleNextAlarm();
   }
 }
 
@@ -40,27 +42,82 @@ export function stopRouteAlarm() {
   stopRepeatAlarm();
 }
 
-function startRepeatAlarm() {
+function scheduleNextAlarm() {
   stopRepeatAlarm();
-  repeatTimerId = window.setInterval(() => {
-    if (alarmActive) beepNow();
-  }, 2500);
+  if (!alarmActive) return;
+
+  const pattern = alarmPatternForDistance(currentDistanceMeters);
+  repeatTimerId = window.setTimeout(() => {
+    if (!alarmActive) return;
+    beepNow();
+    scheduleNextAlarm();
+  }, pattern.intervalMs);
 }
 
 function stopRepeatAlarm() {
   if (repeatTimerId !== null) {
-    window.clearInterval(repeatTimerId);
+    window.clearTimeout(repeatTimerId);
     repeatTimerId = null;
   }
 }
 
 function beepNow() {
+  const pattern = alarmPatternForDistance(currentDistanceMeters);
   const now = Date.now();
-  if (now - lastBeepAt < 700) return;
+  if (now - lastBeepAt < Math.min(250, pattern.intervalMs - 50)) return;
   lastBeepAt = now;
 
-  playTone(880, 0.12, 0.18);
-  window.setTimeout(() => playTone(880, 0.12, 0.18), 180);
+  for (let index = 0; index < pattern.beeps; index += 1) {
+    window.setTimeout(() => {
+      playTone(pattern.frequency, pattern.durationSeconds, pattern.volume);
+    }, index * pattern.gapMs);
+  }
+}
+
+function alarmPatternForDistance(distanceMeters) {
+  const extraDistance = Math.max(0, distanceMeters - OFF_ROUTE_DISTANCE_METERS);
+
+  if (extraDistance >= 90) {
+    return {
+      intervalMs: 450,
+      beeps: 4,
+      gapMs: 90,
+      frequency: 1320,
+      durationSeconds: 0.1,
+      volume: 0.95
+    };
+  }
+
+  if (extraDistance >= 40) {
+    return {
+      intervalMs: 800,
+      beeps: 3,
+      gapMs: 110,
+      frequency: 1160,
+      durationSeconds: 0.11,
+      volume: 0.8
+    };
+  }
+
+  if (extraDistance >= 15) {
+    return {
+      intervalMs: 1400,
+      beeps: 2,
+      gapMs: 140,
+      frequency: 980,
+      durationSeconds: 0.12,
+      volume: 0.6
+    };
+  }
+
+  return {
+    intervalMs: 2300,
+    beeps: 1,
+    gapMs: 160,
+    frequency: 880,
+    durationSeconds: 0.13,
+    volume: 0.38
+  };
 }
 
 function getAudioContext() {
@@ -86,11 +143,11 @@ function playTone(frequency, durationSeconds, volume) {
   const start = context.currentTime;
   const end = start + durationSeconds;
 
-  oscillator.type = "sine";
+  oscillator.type = "square";
   oscillator.frequency.setValueAtTime(frequency, start);
 
   gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(Math.max(volume, 0.0001), start + 0.015);
+  gain.gain.exponentialRampToValueAtTime(Math.max(volume, 0.0001), start + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.0001, end);
 
   oscillator.connect(gain);

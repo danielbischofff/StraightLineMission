@@ -2,7 +2,7 @@ import { el } from "./dom.js";
 import { map } from "./map.js";
 import { renderHome, updateSetupStatus } from "./ui.js";
 import { centerOnUser } from "./map.js";
-import { finishMission, restartMissionFromHistory, resumeActiveMission } from "./mission.js";
+import { deleteMission, finishMission, renameMission, restartMissionFromHistory, resumeActiveMission } from "./mission.js";
 import { cancelSetup, setupBack, setupNext, startSetup, useGps } from "./setup.js";
 import { state } from "./state.js";
 
@@ -11,6 +11,7 @@ function boot() {
     document.body.innerHTML = "<p style='padding:20px;font-family:sans-serif'>Kartenbibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen.</p>";
     return;
   }
+
 
   el.newBtn.addEventListener("click", startSetup);
   el.cancelSetupBtn.addEventListener("click", cancelSetup);
@@ -23,6 +24,18 @@ function boot() {
     const resumeButton = event.target.closest("[data-resume-active]");
     if (resumeButton) {
       resumeActiveMission();
+      return;
+    }
+
+    const renameButton = event.target.closest("[data-rename-id]");
+    if (renameButton) {
+      renameMission(renameButton.dataset.renameId);
+      return;
+    }
+
+    const deleteButton = event.target.closest("[data-delete-id]");
+    if (deleteButton) {
+      deleteMission(deleteButton.dataset.deleteId);
       return;
     }
 

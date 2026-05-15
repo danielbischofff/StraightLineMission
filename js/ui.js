@@ -69,8 +69,8 @@ export function updateTimer() {
 }
 
 export function renderHome() {
-  const total = state.missions.reduce((sum, mission) => sum + Number(mission.score || 0), 0);
-  const best = state.missions.reduce((max, mission) => Math.max(max, Number(mission.score || 0)), 0);
+  const total = state.missions.reduce((sum, mission) => sum + Math.round(Number(mission.score || 0)), 0);
+  const best = state.missions.reduce((max, mission) => Math.max(max, Math.round(Number(mission.score || 0))), 0);
 
   el.totalScore.textContent = String(total);
   el.runCount.textContent = String(state.missions.length);
@@ -97,7 +97,7 @@ export function renderHome() {
           ${active.samples || 0} gps
         </div>
       </div>
-      <div class="points">${active.score || 0}</div>
+      <div class="points">${Math.round(Number(active.score || 0))}</div>
     `;
     el.history.appendChild(item);
   }
@@ -117,24 +117,41 @@ export function renderHome() {
 
   state.missions.forEach((mission, index) => {
     const canReplay = Boolean(mission.start && mission.end);
-    const item = document.createElement(canReplay ? "button" : "div");
-    if (canReplay) {
-      item.type = "button";
-      item.dataset.replayId = mission.id;
-    }
-    item.className = `card mission${canReplay ? " mission-button" : ""}`;
+    const fallbackTitle = `Mission ${String(state.missions.length - index).padStart(2, "0")}`;
+    const title = escapeHtml(mission.name || fallbackTitle);
+    const replayLabel = canReplay ? "erneut laufen" : "Route fehlt";
+
+    const item = document.createElement("div");
+    item.className = "card mission";
     item.innerHTML = `
       <div>
-        <div class="mission-title">Mission ${String(state.missions.length - index).padStart(2, "0")}${canReplay ? " erneut laufen" : ""}</div>
+        <div class="mission-title">${title}</div>
         <div class="mission-meta">
           ${new Date(mission.createdAt).toLocaleDateString("de-DE")} ·
           ${formatDistance(mission.distanceMeters || 0)} ·
           ${formatDuration(mission.durationMs || 0)} ·
-          ${mission.samples || 0} gps
+          ${mission.samples || 0} gps ·
+          ${replayLabel}
         </div>
       </div>
-      <div class="points">${mission.score || 0}</div>
+      <div class="mission-side">
+        <div class="points">${Math.round(Number(mission.score || 0))}</div>
+        <div class="mission-actions">
+          <button type="button" class="mini-btn" data-rename-id="${mission.id}">Name</button>
+          <button type="button" class="mini-btn danger-mini" data-delete-id="${mission.id}">Delete</button>
+          ${canReplay ? `<button type="button" class="mini-btn primary-mini" data-replay-id="${mission.id}">Start</button>` : ""}
+        </div>
+      </div>
     `;
     el.history.appendChild(item);
   });
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
