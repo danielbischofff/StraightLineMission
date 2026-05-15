@@ -4,21 +4,21 @@ import { addWalkPoint, distanceToRoute, updateUserPositionMarker } from "./map.j
 import { addScore } from "./mission.js";
 import { updateMission, updateSetupStatus } from "./ui.js";
 
-const HIGH_ACCURACY_OPTIONS = {
+const QUICK_FIX_OPTIONS = {
+  enableHighAccuracy: false,
+  maximumAge: 60000,
+  timeout: 10000
+};
+
+const ACCURATE_FIX_OPTIONS = {
   enableHighAccuracy: true,
   maximumAge: 0,
   timeout: 25000
 };
 
-const LOW_ACCURACY_OPTIONS = {
-  enableHighAccuracy: false,
-  maximumAge: 60000,
-  timeout: 12000
-};
-
 const WATCH_OPTIONS = {
   enableHighAccuracy: true,
-  maximumAge: 1000,
+  maximumAge: 5000,
   timeout: 30000
 };
 
@@ -50,11 +50,6 @@ export function requestGpsWatch() {
 
   el.offset.textContent = "GPS …";
   state.watchId = navigator.geolocation.watchPosition(onPosition, onPositionError, WATCH_OPTIONS);
-
-  // iOS/Safari liefert den ersten Watch-Wert manchmal spät. Dieser zusätzliche
-  // Einzel-Fix triggert die Permission-Abfrage und gibt schneller Feedback.
-  navigator.geolocation.getCurrentPosition(onPosition, onPositionError, LOW_ACCURACY_OPTIONS);
-
   return true;
 }
 
@@ -67,54 +62,91 @@ export function stopGpsWatch() {
   stopTemporaryWatch();
 }
 
-export function requestSingleGpsFix() {
-  return new Promise(resolve => {
-    if (!canUseGeolocation()) {
-      resolve({ ok: false, message: getGpsSupportMessage() });
-      return;
-    }
+export async function requestSingleGpsFix() {
+  if (!canUseGeolocation()) {
+    return { ok: false, message: getGpsSupportMessage() };
+  }
 
-    let settled = false;
+  el.setupStatus.textContent = "GPS wird gesucht … bitte Standort erlauben.";
+
+  const permission = await getLocationPermissionState();
+  if (permission === "denied") {
+    return {
+      ok: false,
+      message: "Standort ist im Browser blockiert. iPhone: Safari > Aa > Website-Einstellungen > Standort > Erlauben."
+    };
+  }
+
+  // iOS Safari is most reliable when the permission prompt is tied to one
+  // direct user action and geolocation calls are not fired in parallel.
+  const quickFix = await getPosition(QUICK_FIX_OPTIONS);
+  if (quickFix.ok) {
+    onPosition(quickFix.position);
+    return { ok: true, message: "GPS gefunden." };
+  }
+
+  const accurateFix = await getPosition(ACCURATE_FIX_OPTIONS);
+  if (accurateFix.ok) {
+    onPosition(accurateFix.position);
+    return { ok: true, message: "GPS gefunden." };
+  }
+
+  const watchFix = await getFirstWatchPosition();
+  if (watchFix.ok) {
+    onPosition(watchFix.position);
+    return { ok: true, message: "GPS gefunden." };
+  }
+
+  return {
+    ok: false,
+    message: gpsErrorMessage(watchFix.error || accurateFix.error || quickFix.error)
+  };
+}
+
+function getPosition(options) {
+  return new Promise(resolve => {
+    navigator.geolocation.getCurrentPosition(
+      position => resolve({ ok: true, position }),
+      error => resolve({ ok: false, error }),
+      options
+    );
+  });
+}
+
+function getFirstWatchPosition() {
+  return new Promise(resolve => {
+    let finished = false;
     let lastError = null;
 
-    const finishOk = position => {
-      if (settled) return;
-      settled = true;
+    const finish = result => {
+      if (finished) return;
+      finished = true;
       stopTemporaryWatch();
-      onPosition(position);
-      resolve({ ok: true, message: "GPS gefunden." });
+      resolve(result);
     };
 
-    const rememberError = error => {
-      lastError = error;
-    };
+    temporaryWatchId = navigator.geolocation.watchPosition(
+      position => finish({ ok: true, position }),
+      error => {
+        lastError = error;
+        if (error.code === error.PERMISSION_DENIED) finish({ ok: false, error });
+      },
+      WATCH_OPTIONS
+    );
 
-    const finishError = () => {
-      if (settled) return;
-      settled = true;
-      stopTemporaryWatch();
-      resolve({
-        ok: false,
-        message: lastError ? gpsErrorMessage(lastError) : "GPS konnte keinen Standort liefern. Standortzugriff prüfen und erneut tippen."
-      });
-    };
-
-    el.setupStatus.textContent = "GPS wird gesucht … bitte Standort erlauben.";
-
-    // Robuster iPhone-Pfad: watchPosition startet auf iOS oft zuverlässiger als
-    // nur getCurrentPosition. Der Watch wird nach dem ersten Fix sofort beendet.
-    temporaryWatchId = navigator.geolocation.watchPosition(finishOk, rememberError, WATCH_OPTIONS);
-
-    // Parallel ein schneller Cache-/Netzwerk-Fix. Falls der exakte GPS-Fix lange
-    // braucht, kann Safari damit trotzdem schon eine nutzbare Position liefern.
-    navigator.geolocation.getCurrentPosition(finishOk, rememberError, LOW_ACCURACY_OPTIONS);
-
-    window.setTimeout(() => {
-      navigator.geolocation.getCurrentPosition(finishOk, rememberError, HIGH_ACCURACY_OPTIONS);
-    }, 300);
-
-    window.setTimeout(finishError, 32000);
+    window.setTimeout(() => finish({ ok: false, error: lastError }), 32000);
   });
+}
+
+async function getLocationPermissionState() {
+  if (!navigator.permissions || !navigator.permissions.query) return "unknown";
+
+  try {
+    const status = await navigator.permissions.query({ name: "geolocation" });
+    return status.state;
+  } catch {
+    return "unknown";
+  }
 }
 
 function stopTemporaryWatch() {
@@ -155,8 +187,12 @@ function onPositionError(error) {
 }
 
 function gpsErrorMessage(error) {
+  if (!error) {
+    return "GPS konnte keinen Standort liefern. Standortzugriff prüfen und erneut tippen.";
+  }
+
   if (error.code === error.PERMISSION_DENIED) {
-    return "Standort blockiert. iPhone: Safari öffnen > Aa > Website-Einstellungen > Standort > Erlauben.";
+    return "Standort blockiert. iPhone: Einstellungen > Datenschutz & Sicherheit > Ortungsdienste > Safari-Websites > Beim Verwenden erlauben; Präziser Standort einschalten.";
   }
 
   if (error.code === error.POSITION_UNAVAILABLE) {

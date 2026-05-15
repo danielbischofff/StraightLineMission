@@ -57,10 +57,10 @@ export function setupNext() {
 }
 
 export async function useGps() {
-  const ok = await requestSingleGpsFix();
+  const result = await requestSingleGpsFix();
 
-  if (!ok || !state.currentPosition) {
-    el.setupStatus.textContent = "GPS nicht verfügbar. Erlaube Standortzugriff und nutze HTTPS.";
+  if (!result.ok || !state.currentPosition) {
+    el.setupStatus.textContent = result.message;
     return;
   }
 
