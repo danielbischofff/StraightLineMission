@@ -1,6 +1,5 @@
-# Straightline Missions
+# Straightline Missions | Vibe Code Project
 
-Diese Version ist aus der ursprünglichen Single-HTML-Datei in mehrere Dateien aufgeteilt.
 
 ## Struktur
 

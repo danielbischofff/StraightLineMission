@@ -6,6 +6,7 @@ export const el = {
   danger: document.getElementById("danger"),
 
   newBtn: document.getElementById("newBtn"),
+  cancelSetupBtn: document.getElementById("cancelSetupBtn"),
   backBtn: document.getElementById("backBtn"),
   gpsBtn: document.getElementById("gpsBtn"),
   mainBtn: document.getElementById("mainBtn"),

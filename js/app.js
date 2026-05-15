@@ -3,7 +3,7 @@ import { map } from "./map.js";
 import { renderHome, updateSetupStatus } from "./ui.js";
 import { centerOnUser } from "./map.js";
 import { finishMission, restartMissionFromHistory, resumeActiveMission } from "./mission.js";
-import { setupBack, setupNext, startSetup, useGps } from "./setup.js";
+import { cancelSetup, setupBack, setupNext, startSetup, useGps } from "./setup.js";
 import { state } from "./state.js";
 
 function boot() {
@@ -12,8 +12,8 @@ function boot() {
     return;
   }
 
-
   el.newBtn.addEventListener("click", startSetup);
+  el.cancelSetupBtn.addEventListener("click", cancelSetup);
   el.backBtn.addEventListener("click", setupBack);
   el.gpsBtn.addEventListener("click", useGps);
   el.mainBtn.addEventListener("click", setupNext);

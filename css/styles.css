@@ -255,7 +255,7 @@ p {
 
 .buttons {
   display: grid;
-  grid-template-columns: .8fr 1fr 1.2fr;
+  grid-template-columns: .8fr .9fr .8fr 1.2fr;
   gap: 9px;
   margin-top: 12px;
 }
@@ -281,6 +281,11 @@ p {
   background: var(--red);
   color: #fff;
   border-color: var(--red);
+}
+
+.btn.subtle-danger {
+  color: var(--red);
+  border-color: rgba(255,43,43,.35);
 }
 
 .crosshair {

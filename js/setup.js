@@ -20,6 +20,24 @@ export function startSetup() {
   centerOnUser();
 }
 
+
+export function cancelSetup() {
+  resetMapOverlays();
+  el.danger.classList.remove("active");
+
+  state.step = "start";
+  state.start = null;
+  state.end = null;
+  state.walkedCoords = [];
+  state.score = 0;
+  state.startedAt = null;
+  state.lastScoreAt = 0;
+  state.lastScorePosition = null;
+
+  show("home");
+  renderHome();
+}
+
 export function setupBack() {
   if (state.step === "start") {
     show("home");
