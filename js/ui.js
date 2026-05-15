@@ -119,7 +119,7 @@ export function renderHome() {
     const canReplay = Boolean(mission.start && mission.end);
     const fallbackTitle = `Mission ${String(state.missions.length - index).padStart(2, "0")}`;
     const title = escapeHtml(mission.name || fallbackTitle);
-    const replayLabel = canReplay ? "erneut laufen" : "Route fehlt";
+    const replayLabel = mission.planned ? "geplant" : (canReplay ? "erneut laufen" : "Route fehlt");
 
     const item = document.createElement("div");
     item.className = "card mission";

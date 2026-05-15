@@ -59,7 +59,8 @@ function normalizeMission(mission) {
     samples: Number(mission.samples || walkedCoords.length || 0),
     start,
     end,
-    walkedCoords
+    walkedCoords,
+    planned: mission.planned === true
   };
 }
 

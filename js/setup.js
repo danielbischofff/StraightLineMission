@@ -1,8 +1,10 @@
 import { state } from "./state.js";
 import { el } from "./dom.js";
-import { centerOnUser, map, removeLayer, resetMapOverlays, setEnd, setStart } from "./map.js";
+import { centerOnUser, map, removeLayer, resetMapOverlays, routeLengthMeters, setEnd, setStart } from "./map.js";
 import { renderHome, show, updateSetupUi } from "./ui.js";
 import { beginMission } from "./mission.js";
+import { saveMissions } from "./storage.js";
+import { makeId } from "./utils.js";
 import { requestSingleGpsFix } from "./gps.js";
 
 export function startSetup() {
@@ -22,17 +24,8 @@ export function startSetup() {
 
 
 export function cancelSetup() {
-  resetMapOverlays();
-  el.danger.classList.remove("active");
-
-  state.step = "start";
-  state.start = null;
-  state.end = null;
-  state.walkedCoords = [];
-  state.score = 0;
-  state.startedAt = null;
-  state.lastScoreAt = 0;
-  state.lastScorePosition = null;
+  savePlannedMissionIfComplete();
+  resetSetupState();
 
   show("home");
   renderHome();
@@ -93,4 +86,47 @@ export async function useGps() {
   }
 
   updateSetupUi();
+}
+
+function savePlannedMissionIfComplete() {
+  if (!state.start || !state.end) return;
+
+  const mission = {
+    id: makeId(),
+    createdAt: Date.now(),
+    startedAt: null,
+    name: nextPlannedMissionName(),
+    score: 0,
+    rawScore: 0,
+    durationMs: 0,
+    distanceMeters: routeLengthMeters(),
+    samples: 0,
+    start: state.start,
+    end: state.end,
+    walkedCoords: [],
+    planned: true
+  };
+
+  state.missions.unshift(mission);
+  state.missions = state.missions.slice(0, 50);
+  saveMissions(state.missions);
+}
+
+function nextPlannedMissionName() {
+  const number = state.missions.filter(mission => mission.name?.startsWith("Planned Mission")).length + 1;
+  return `Planned Mission ${String(number).padStart(2, "0")}`;
+}
+
+function resetSetupState() {
+  resetMapOverlays();
+  el.danger.classList.remove("active");
+
+  state.step = "start";
+  state.start = null;
+  state.end = null;
+  state.walkedCoords = [];
+  state.score = 0;
+  state.startedAt = null;
+  state.lastScoreAt = 0;
+  state.lastScorePosition = null;
 }
