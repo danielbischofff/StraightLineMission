@@ -75,10 +75,34 @@ export function renderHome() {
   el.totalScore.textContent = String(total);
   el.runCount.textContent = String(state.missions.length);
   el.bestScore.textContent = String(best);
-  el.historyHint.textContent = state.missions.length ? `${state.missions.length} saved` : "empty";
+  const hasActiveMission = Boolean(state.activeMission && state.activeMission.start && state.activeMission.end);
+  el.historyHint.textContent = state.missions.length || hasActiveMission
+    ? `${state.missions.length} saved${hasActiveMission ? " · 1 active" : ""}`
+    : "empty";
   el.history.innerHTML = "";
 
-  if (!state.missions.length) {
+  if (hasActiveMission) {
+    const active = state.activeMission;
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "card mission mission-button active-mission";
+    item.dataset.resumeActive = "true";
+    item.innerHTML = `
+      <div>
+        <div class="mission-title">Aktive Mission fortsetzen</div>
+        <div class="mission-meta">
+          ${new Date(active.createdAt).toLocaleDateString("de-DE")} ·
+          ${formatDistance(active.distanceMeters || 0)} ·
+          ${formatDuration(active.durationMs || 0)} ·
+          ${active.samples || 0} gps
+        </div>
+      </div>
+      <div class="points">${active.score || 0}</div>
+    `;
+    el.history.appendChild(item);
+  }
+
+  if (!state.missions.length && !hasActiveMission) {
     el.history.innerHTML = `
       <div class="card mission">
         <div>
@@ -92,11 +116,16 @@ export function renderHome() {
   }
 
   state.missions.forEach((mission, index) => {
-    const item = document.createElement("div");
-    item.className = "card mission";
+    const canReplay = Boolean(mission.start && mission.end);
+    const item = document.createElement(canReplay ? "button" : "div");
+    if (canReplay) {
+      item.type = "button";
+      item.dataset.replayId = mission.id;
+    }
+    item.className = `card mission${canReplay ? " mission-button" : ""}`;
     item.innerHTML = `
       <div>
-        <div class="mission-title">Mission ${String(state.missions.length - index).padStart(2, "0")}</div>
+        <div class="mission-title">Mission ${String(state.missions.length - index).padStart(2, "0")}${canReplay ? " erneut laufen" : ""}</div>
         <div class="mission-meta">
           ${new Date(mission.createdAt).toLocaleDateString("de-DE")} ·
           ${formatDistance(mission.distanceMeters || 0)} ·

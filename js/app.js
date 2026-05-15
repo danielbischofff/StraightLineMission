@@ -2,7 +2,7 @@ import { el } from "./dom.js";
 import { map } from "./map.js";
 import { renderHome, updateSetupStatus } from "./ui.js";
 import { centerOnUser } from "./map.js";
-import { finishMission } from "./mission.js";
+import { finishMission, restartMissionFromHistory, resumeActiveMission } from "./mission.js";
 import { setupBack, setupNext, startSetup, useGps } from "./setup.js";
 import { state } from "./state.js";
 
@@ -19,6 +19,16 @@ function boot() {
   el.mainBtn.addEventListener("click", setupNext);
   el.centerBtn.addEventListener("click", centerOnUser);
   el.finishBtn.addEventListener("click", finishMission);
+  el.history.addEventListener("click", event => {
+    const resumeButton = event.target.closest("[data-resume-active]");
+    if (resumeButton) {
+      resumeActiveMission();
+      return;
+    }
+
+    const replayButton = event.target.closest("[data-replay-id]");
+    if (replayButton) restartMissionFromHistory(replayButton.dataset.replayId);
+  });
 
   map.on("move", () => {
     if (state.view === "setup") updateSetupStatus();

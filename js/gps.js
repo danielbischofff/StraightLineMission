@@ -1,8 +1,9 @@
 import { state } from "./state.js";
 import { el } from "./dom.js";
 import { addWalkPoint, distanceToRoute, updateUserPositionMarker } from "./map.js";
-import { addScore } from "./mission.js";
+import { addScore, saveActiveMissionProgress } from "./mission.js";
 import { updateMission, updateSetupStatus } from "./ui.js";
+import { handleRouteAlarm } from "./audio.js";
 
 const QUICK_FIX_OPTIONS = {
   enableHighAccuracy: false,
@@ -169,8 +170,10 @@ function onPosition(position) {
   if (state.view === "mission" && state.start && state.end) {
     const distance = distanceToRoute(latlng);
     updateMission(distance);
+    handleRouteAlarm(distance);
     addWalkPoint(latlng);
     addScore(latlng, distance);
+    saveActiveMissionProgress();
   }
 }
 

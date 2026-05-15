@@ -1,4 +1,4 @@
-import { loadMissions } from "./storage.js";
+import { loadActiveMission, loadMissions } from "./storage.js";
 
 export const state = {
   view: "home",
@@ -24,5 +24,6 @@ export const state = {
   startedAt: null,
   timerId: null,
 
-  missions: loadMissions()
+  missions: loadMissions(),
+  activeMission: loadActiveMission()
 };
