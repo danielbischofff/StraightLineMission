@@ -1,7 +1,8 @@
 export const STORAGE_KEY = "straightline_missions_clean_v1";
 export const LEGACY_STORAGE_KEY = "straightline_missions_v3";
 
-export const DANGER_DISTANCE_METERS = 35;
+export const DANGER_DISTANCE_METERS = 10;
+export const OFF_ROUTE_DISTANCE_METERS = 10;
 export const DEFAULT_CENTER = [52.52, 13.405];
 export const DEFAULT_ZOOM = 15;
 export const USER_ZOOM = 18;

@@ -4,7 +4,8 @@ import { saveMissions } from "./storage.js";
 import { makeId, toPoint } from "./utils.js";
 import { centerOnUser, createWalkedLine, drawRoute, routeLengthMeters } from "./map.js";
 import { renderHome, show, updateTimer } from "./ui.js";
-import { requestGpsWatch } from "./gps.js";
+import { requestGpsWatch, stopGpsWatch } from "./gps.js";
+import { stopRouteAlarm, unlockRouteAlarm } from "./audio.js";
 
 export function beginMission() {
   if (!state.start || !state.end) return;
@@ -15,6 +16,7 @@ export function beginMission() {
   state.lastScoreAt = 0;
   state.lastScorePosition = null;
   state.startedAt = Date.now();
+  unlockRouteAlarm();
 
   el.score.textContent = "0";
   el.timer.textContent = "00:00";
@@ -32,6 +34,8 @@ export function finishMission() {
   clearInterval(state.timerId);
   state.timerId = null;
   el.danger.classList.remove("active");
+  stopRouteAlarm();
+  stopGpsWatch();
 
   const durationMs = state.startedAt ? Date.now() - state.startedAt : 0;
   const mission = {
