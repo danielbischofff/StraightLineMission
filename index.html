@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Straightline Missions</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/styles.css">
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div id="map"></div>
+    <div id="danger"></div>
+    <div id="crosshair" class="crosshair hidden"></div>
+
+    <section id="home" class="screen active">
+      <main class="home">
+        <div class="brand">STR8.LINE</div>
+        <div class="eyebrow">Straightline Missions</div>
+        <h1>walk the line.</h1>
+        <p>Setze Start und Ziel. Laufe möglichst nah an der direkten Linie. Dein Score steigt, je näher du an der Linie bleibst.</p>
+
+        <div class="stats">
+          <div class="card stat"><div class="label">Score</div><div id="totalScore" class="value">0</div></div>
+          <div class="card stat"><div class="label">Runs</div><div id="runCount" class="value">0</div></div>
+          <div class="card stat"><div class="label">Best</div><div id="bestScore" class="value">0</div></div>
+        </div>
+
+        <div class="history-head">
+          <h2>History</h2>
+          <div id="historyHint" class="hint">empty</div>
+        </div>
+        <div id="history" class="list"></div>
+      </main>
+      <button id="newBtn" class="fab">+ new mission</button>
+    </section>
+
+    <section id="setup" class="screen map-screen">
+      <div class="panel top">
+        <div class="row">
+          <div>
+            <h2 id="setupTitle" class="step-title">1. Start setzen</h2>
+            <div id="setupCopy" class="copy">Bewege die Karte. Der Punkt unter dem Fadenkreuz wird dein Start.</div>
+          </div>
+          <div id="stepPill" class="pill">01/03</div>
+        </div>
+      </div>
+      <div class="panel bottom">
+        <div id="setupStatus" class="copy">GPS optional.</div>
+        <div class="buttons">
+          <button id="backBtn" class="btn">Home</button>
+          <button id="gpsBtn" class="btn">GPS</button>
+          <button id="mainBtn" class="btn primary">Set start</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="mission" class="screen map-screen">
+      <div class="hud">
+        <div class="card"><div class="label">Time</div><div id="timer" class="value">00:00</div></div>
+        <div class="card"><div class="label">Offset</div><div id="offset" class="value">–</div></div>
+        <div class="card"><div class="label">Score</div><div id="score" class="value">0</div></div>
+      </div>
+      <div class="actions">
+        <button id="centerBtn" class="btn">Center</button>
+        <button id="finishBtn" class="btn danger">Finish</button>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
